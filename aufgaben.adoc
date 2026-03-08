@@ -1,0 +1,233 @@
+= Übungen
+
+== Klassen analysieren
+
+Als Erstes wollen wir Klassen nach statischen Factory-Methoden durchsuchen. Als Vorgabe verwenden wir das Package `uebung1`.
+
+*Etwas Hintergrundwissen zu statischen Factory-Methoden* 
+(nicht zwingend nötig für die Aufgaben, kannst du auch überspringen)
+
+Statische Factory-Methoden erzeugen ähnlich wie Konstruktoren eine Instanz einer Klasse. Ihr kennt sicherlich Methoden wie `LocalDateTime.now()` oder `List.of()`, die verwendet werden können um Instanzen von `LocalDateTime` oder `List` zu erzeugen. Factory-Methoden haben gegenüber Konstruktoren verschiedene Vorteile. 
+
+. Sie haben einen frei wählbaren Namen und können besser beschrieben, was passiert. Preisfrage: Was für eine Zahl erzeugt `new BigInteger(1024,100,new Random())`?
+
+. Ein Konstruktor kann nur eine Instanz von exakt einem Typ erzeugen (nämlich die Klasse, in der der Konstruktor definiert ist). Eine statische Factory-Methode kann auch Subtypen erzeugen. Ein Beispiel dafür ist `List.of(...)`, das je nach Anzahl der Parameter unterschiedliche Typen, die von List erben, zurückgibt.
+
+_Mehr zum Thema findest du in Effective Java von Joshua Bloch_
+
+*Aufgabe:* Implementiere die Hilfsmethode `isStatic`, die für statische Methoden `true` und für Instanzmethoden `false` zurückgibt. 
+
+TIP: Die Klasse `Modifier` hat hilfreiche Methoden, um das Problem zu lösen. 
+
+*Aufgabe:* Implementiere die Hilfsmethode `createsClass`, die `true` zurückgibt, genau dann, wenn der Rückgabetyp der übergebenen Methode die übergebene Klasse (oder ein Subtyp) Klasse ist. 
+
+TIP: Ihr könnt euch auch erst mal auf Gleichheit der Klasse beschränken. Ansonsten gibt es in `Class` eine Methode `isAssignableFrom`, die hier helfen kann. 
+
+*Aufgabe:* Implementiere die Methode `printFactoryMethodsIn`, die die öffentlichen statischen Factory-Methoden der Klasse ausgibt. 
+
+TIP: Verwende die beiden Hilfsmethoden (Thanks Capt'n Obvious) 
+
+
+== Texte dekorieren
+
+Wir haben eine Basisanwendung, die eine Begrüßung auf der Konsole ausgibt. Den Begrüßungstext wollen wir durch zusätzliche Dekorationen aufhübschen und das Ganze wollen wir durch Plugins dynamisch erweiterbar gestalten. Wir haben in `uebung2` schon eine erste Version geschrieben, die nur erweitert werden kann, indem wir sie neu kompilieren. 
+
+*Aufgabe:* Erstell ein neues Plugin, das den Text erweitert (denkt euch selber was aus. Wenn ihr unkreativ seid: Setzt `.oO` und `Oo.` um den Text herum) und baut es in das Programm (und den Beispielaufruf) ein. 
+
+Wir wollen jetzt die Compilezeit-Abhängigkeiten zu allen Dekorator-Implementierungen loswerden. Die Klasse `Greet` kennt nach dem Umbau nur noch das Interface `Dekorator` aber keine der Implementierungen in `uebung2.plugins`.
+
+*Aufgabe:* Ersetze die Methode `getPlugin` durch eine Variante, die eine Instanz der jeweils passenden Klasse zurückgibt. 
+
+*Bonus-Aufgabe:* Verwende eine `Map`, um Instanzen zu cachen anstatt sie jedesmal neu zu erstellen. 
+
+
+== Testing Framework
+
+Wir wollen ein rudimentäres Testing-Framework bauen, das automatisiert Tests ausführt und uns Rückmeldung über bestandene und nicht-bestandene Tests gibt.
+
+Ihr könnt gerne selber kreativ werden und euch überlegen, wie das Testframework funktionieren soll. Falls ihr selber keine Idee habt, ist hier mal eine Möglichkeit.
+
+=== Mögliches Framework-Design
+
+Alle `void` Methoden, die mit `@TestMethode("Beschreibung")` annotiert sind, werden als Test ausgeführt. Jeder Test wird in einer eigenen Instanz der umschließenden Klasse ausgeführt. Die umschließende Klasse muss einen Default-Konstruktor haben.
+
+NOTE: Die eigene Instanz wollen wir haben, damit wir Tests voneinander isoliert ausführen. Den Default-Konstruktor haben wir, damit die Klasse per Reflection einfach zu erzeugen ist. 
+
+Ein Test ist erfolgreich, wenn er keine Exception wirft. Wenn ein Test eine Exception erzeugt, schlägt der Test fehl. 
+Im Vorlagenrepository ist AssertJ als Dependency hinzugefügt, das ihr verwqenden könnt, um eure Testassertions zu schreiben. AssertJ erzeugt eine Exception, wenn eine Assertion fehlschlägt. 
+
+Hier ist ein Beispiel für einige Testfälle, die eine Methode zur Berechnung von Schaltjahren testen:
+
+[source, java]
+----
+public class SchaltjahrRechnerTest {
+
+  private SchaltjahrRechner rechner = new SchaltjahrRechner();
+
+  @TestMethode("Jahre, die durch 100, aber nicht durch 400 teilbar sind, sind keine Schaltjahre")
+  void test_1900() {
+    assertThat(rechner.isSchaltjahr(1900)).isFalse();
+  }
+
+  @TestMethode("Jahre, die durch 4, aber nicht durch 100 teilbar sind, sind Schaltjahre")
+  void test_1904() {
+    assertThat(rechner.isSchaltjahr(1904)).isTrue();
+  }
+
+  @TestMethode("Jahre, die nicht durch 4 teilbar sind, sind keine Schaltjahre")
+  void test1_2001() {
+    assertThat(rechner.isSchaltjahr(2001)).isFalse();
+  }
+
+  // Die Implementierung hat hier noch einen Fehler
+  @TestMethode("Jahre, die durch 400 teilbar sind, sind Schaltjahre")
+  void test_2000() {
+    assertThat(rechner.isSchaltjahr(2000)).isTrue();
+  }
+
+}
+----
+
+Die Ausgabe könnte dann zum Beispiel so aussehen:
+
+[source]
+----
+Jahre, die durch 100, aber nicht durch 400 teilbar sind, sind keine Schaltjahre ... succeeded.
+Jahre, die durch 4, aber nicht durch 100 teilbar sind, sind Schaltjahre ... succeeded.
+Jahre, die nicht durch 4 teilbar sind, sind keine Schaltjahre ... succeeded.
+Jahre, die durch 400 teilbar sind, sind Schaltjahre ... failed.
+java.lang.AssertionError: 
+Expecting value to be true but was false
+	at uebung_projekt1.testcases.SchaltjahrRechnerTest.test_2000(SchaltjahrRechnerTest.java:30)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at uebung_projekt1.jltest.TestRunner.runTest(TestRunner.java:49)
+	at uebung_projekt1.jltest.TestRunner.runTestsIn(TestRunner.java:31)
+	at uebung_projekt1.jltest.TestRunner.lambda$main$0(TestRunner.java:18)
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+	at uebung_projekt1.jltest.TestRunner.main(TestRunner.java:18)
+
+----
+
+=== Mögliche Erweiterungen 
+
+- `@Skip("Grund")` Annotation, um bestimmte Testfälle zu überspringen.
+
+- Der Default-Konstruktor darf auch `private` oder package-private sein.
+
+
+=== Hilfestellungen
+
+- Wenn ihr Guavas `ClassPath.from` nutzt, um alle Klassen zu finden und auf den `ClassInfo`-Objekten `load` aufruft, um die `Class`-Objekte zum bekommen, kann es passieren, dass ihr eine `NoClassDefFoundError`-Exception bekommt. Das liegt daran, dass Guava auch Dinge findet, die nicht als `Class` geladen werden können, zum Beispiel `module-info`. 
+
+- Checkt, ob eine Methode die passende `@TestMethode` Annotation hat, bevor ihr die umschließende Klasse instanziiert. 
+
+- Die Methoden in dem Test sind paket-privat, d.h. ihr müsst sie erst "accessible" machen, bevor ihr sie ausführen könnt. 
+
+- Wenn eine über Reflection ausgeführte Methode eine Exception wirft, wird die in eine `InvocationTargetException` Exception verpackt. Ihr bekommt schörere Fehlermeldungen, wenn ihr die Exception auspackt. 
+
+- Der Algorithmus im Pseudocode ist:
++
+[source]
+----
+klassen <- alle Klassen finden
+Für jede Klasse K in klassen:
+ methoden <- alle Methoden in K finden
+ für jede Methode M in methoden:
+   wenn M nicht mit @TestKlasse annotiert ist: Ende der Schleife
+   Text der Annotation ausgeben
+   K instanziieren
+   Versuche M aufzurufen:
+    -> Exception: failed und Exception ausgeben 
+    -> sonst: succeeded ausgeben 
+----
+
+
+
+
+== Dependency Injection Framework
+
+Ziel ist es, ein kleines Dependency-Injection Framework zu bauen. Das Framework soll im Anwendungscode zum Beispiel folgendermaßen funktionieren.
+
+[source, java]
+----
+public static void main(String[] args) {
+
+  Injector injector = new Injector();
+  
+  // Klassen suchen, die eine Markierungs-Annotation haben
+  injector.scanForComponents("uebung_projekt2.app");
+
+  Greeter greeter = injector.create(Greeter.class);
+  System.out.println(greeter.getMessage());
+
+}
+----
+
+Der Einfachheit halber sollen die Komponenten immer genau einen Konstruktor haben. 
+
+Die Klasse `Greeter` ist eine Dependency, die vom Framework verwaltet wird. Sie wird über eine Annotation markiert kann selber auch weitere Dependencies benötigen, die im Konstruktor injiziert werden.
+
+[source, java]
+----
+@Komponente
+public class Greeter {
+
+  private final Clock clock;
+
+  public Greeter(Clock clock) {
+    this.clock = clock;
+  }
+
+  public String getMessage() {
+    // Implementierung
+  }
+
+}
+----
+
+Wenn es mehr als eine passende Dependency gibt, wählt das Framework einfach irgendeine aus. 
+
+
+=== Mögliche Erweiterungen 
+
+- Erweitere das Framework so, dass mehr als ein Konstruktor vorhanden sein kann und per Annotation der Konstruktor markiert wird, den das Framework verwenden soll. 
+
+- Für manche Komponenten ist es sinnvoll jedesmal eine neue Instanz zu injizieren, für andere wollen wir lieber immer dieselbe Instanz haben. Eine mögliche Erweiterung ist eine Annotation (oder ein Patameter der bestehenden Annotation), mit der wir das Verhalten für die Komponente umschalten können
+
+- Experiment mal mit einer zirkulären Dependency, bei der sich zwei Komponenten gegenseitig benötigen. Wie verhält sich dein Framework? Versuch das beim Scan zu detektieren und einen Fehler zu erzeugen. 
+
+=== Hilfestellungen 
+
+- Die `ClassPath` Klasse hat eine Methode `getTopLevelClassesRecursive(String package)`, mit der alle Klassen innerhalb einer Paketstruktur gefunden werden können. 
+
+- In unserem Beispiel benötigt `Greeter` ein Objekt vom Typ `Clock`. Das ist ein Interface, das von `SystemZeit` implementiert wird. Du kannst also bei der Auswahl der Komponente nicht nach der exakten Klasse suchen, sondern musst Subtypen berücksichtigen. Die Methode `isAssignableFrom` der Klasse `Class` ist hier hilfreich.
+
+- Der Algorithmus für den Komponentenscan im Pseudocode ist:
++
+[source]
+----
+Eingabe: packages
+
+Für jedes Package P in packages:
+  klassen <- alle Klassen in P finden
+  Für jede Klasse K in Klassen:
+    Wenn K mit @Komponente annotiert ist:
+      merke dir K
+----
+
+- Der Algorithmus für die Erzeugung im Pseudocode ist:
++
+[source]
+----
+Eingabe: Klasse klasse
+Ausgabe: Instanz R von klassen
+
+Selektiere den Konstruktor K von klasse:
+paramtypes <- alle Parameter von K
+Für alle Parameter-Typen T[i] aus paramtypes:
+  Finde eine passende Komponente C:
+    Wenn es kein C gibt: Fehler 
+    Erzeuge rekursiv eine Instanz O[i] von T
+  R <- Rufe den Konstruktor K mit den Parametern O[i auf] 
+----

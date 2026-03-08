@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+group = 'rheinjug'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "com.google.guava:guava:33.5.0-jre"
+    implementation 'org.assertj:assertj-core:3.27.6'
+}
+
