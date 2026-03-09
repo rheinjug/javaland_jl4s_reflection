@@ -26,7 +26,7 @@ public class Greet {
     String[] pluginNames = {
         "uebung2.plugins.Space", "uebung2.plugins.Star",
         "uebung2.plugins.Space", "uebung2.plugins.WavyLines",
-        "uebung2.plugins.WavyLines"};
+        "uebung2.plugins.WavyLines", "uebung2.plugins.WavyLines", "uebung2.plugins.Star", "uebung2.plugins.WavyLines"};
     String text = "Hallo";
     for (String pluginName : pluginNames) {
       Dekorator plugin = getPlugin(pluginName);

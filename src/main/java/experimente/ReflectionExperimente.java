@@ -1,12 +1,16 @@
 package experimente;
 
 import experimente.person.Person;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class ReflectionExperimente {
 
-  public static void main(String[] args) {
+  public static void main(String[] args)
+      throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
+      InstantiationException, IllegalAccessException {
 
     // ++++ Schritt 1
     // Infos über eine Klasse sammeln
@@ -18,13 +22,13 @@ public class ReflectionExperimente {
     System.out.println(p);
 
 
-
-
-
     // Klassenobjekt holen
 
     //    Class<? extends Person> aClass = p.getClass();
-    Class<Person> personClass = Person.class;
+//    Class<Person> personClass = Person.class;
+
+    Class<?> personClass = Class.forName("experimente.person.Person");
+
 
     System.out.println(personClass);
 
@@ -38,8 +42,9 @@ public class ReflectionExperimente {
     // alle öffentlichen Methoden der Klasse
 
     for (Method method : personClass.getMethods()) {
-      if(method.getDeclaringClass() == Person.class)
-      System.out.println(method);
+      if (method.getDeclaringClass() == Person.class) {
+        System.out.println(method);
+      }
     }
 
     // alle Methoden
@@ -56,7 +61,7 @@ public class ReflectionExperimente {
           personClass.getDeclaredMethod("adressAufkleberDrucken",
               String.class);
       System.out.println(adressAufkleberDrucken);
-    // Rückgabetyp ermitteln
+      // Rückgabetyp ermitteln
       System.out.println(adressAufkleberDrucken.getReturnType());
 
       Method declaredMethod = personClass.getDeclaredMethod("setName", String.class);
@@ -66,15 +71,9 @@ public class ReflectionExperimente {
       System.out.println(Modifier.isSynchronized(modifiers));
 
 
-
-
     } catch (NoSuchMethodException e) {
       throw new RuntimeException(e);
     }
-
-
-
-
 
 
     // Parametertypen ermitteln
@@ -82,19 +81,35 @@ public class ReflectionExperimente {
     // Modifier ermitteln
 
 
-
     // ++++ Schritt 2
     // Vollständig dynamische Instanziierung und Methoden aufrufen
 
     // Klassenobjekt dynamisch holen
+// siehe oben
 
     // Konstruktor holen
+
+    Constructor<?> constructor =
+        personClass.getConstructor(String.class, String.class, int.class, String.class);
+
+    Object o =
+        constructor.newInstance("Michael Schmidt", "Universitätsstr. 1", 40225, "Düsseldorf");
+
+    Method method = personClass.getMethod("toString");
+
+    String s = (String) method.invoke(o);
+    System.out.println(s);
 
     // Instanz erzeugen (Konstruktor)
 
     // Instanz-Methode aufrufen
 
     // Statische Methode aufrufen (Factory)
+
+    Method factory = personClass.getMethod("create", String.class, String.class, int.class);
+    Object o1 = factory.invoke(null, "Franz", "Beethovenstr. 4", 42889);
+    System.out.println(o1);
+
 
     // ++++ Schritt 3
     // Auf Wiedersehen Kapselung
@@ -109,8 +124,6 @@ public class ReflectionExperimente {
 
     // ++++ Schritt 5
     // Alle Klassen finden
-
-
 
 
   }
